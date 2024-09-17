@@ -13,7 +13,7 @@ This Python script automates the process of converting a static HTML web templat
 
 1. **Clone the Repository**
     ```bash
-    git clone https://github.com/your-username/web-template-to-flask-converter.git
+    git clone [https://github.com/your-username/web-template-to-flask-converter](https://github.com/yg1222/Flaskify-Template.git
     cd web-template-to-flask-converter
     ```
 
