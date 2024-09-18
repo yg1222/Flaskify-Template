@@ -18,7 +18,6 @@ def main():
     def modify_srcs(flask_project_dir):
         templates_dir = os.path.join(flask_project_dir, 'templates')
         for root, _, files in os.walk(templates_dir):
-            print(files)
             for file in files:
                 if file.endswith(('.html', '.htm')):
                     html_file_path = os.path.join(root, file)
@@ -62,7 +61,6 @@ def main():
                 else:
                     dest_file_path = os.path.join(static_dir, cursor_root, file)
                     os.makedirs(os.path.dirname(dest_file_path), exist_ok=True)
-                    print(f"\n{src_file_path} ===>  {dest_file_path}\n")
                     if os.path.isfile(src_file_path):
                         if not os.path.exists(dest_file_path) or not os.path.samefile(src_file_path, dest_file_path):
                             shutil.copy(src_file_path, dest_file_path)
@@ -77,6 +75,7 @@ def main():
 
     copy_files(theme_dir, flask_project_dir)
     modify_srcs(flask_project_dir)
+
 
 if __name__ == "__main__":
     main()
