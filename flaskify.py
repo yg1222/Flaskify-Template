@@ -2,6 +2,7 @@ import os
 import argparse
 import shutil
 from bs4 import BeautifulSoup
+import re
 from boilerplate import generate_structure_and_boilerplate
 
 def main():
@@ -56,19 +57,30 @@ def main():
                     for tag in soup.find_all(['link', 'img', 'script'], src=True) + soup.find_all('link', href=True) + soup.find_all('a', href=True):
                         if tag.has_attr('href'):
                             if not tag['href'].startswith(('http', 'mailto', 'tel', 'ftp', 'data')):
-                                file_name = os.path.basename(tag['href'])
-                                folder_name = tag['href'].split('/')[0]
+                                file_name = tag['href']
                                 if tag.name == 'link':
-                                    tag['href'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
+                                    tag['href'] = f"{{{{ url_for('static', filename='{file_name}') }}}}"
                                 elif tag.name == 'a':
                                     file_name = os.path.splitext(file_name)[0]  # Strip extension
                                     tag['href'] = f"/{file_name}"
                         elif tag.has_attr('src'):
                             if not tag['src'].startswith('http'):
-                                file_name = os.path.basename(tag['src'])
-                                folder_name = tag['src'].split('/')[0]
-                                tag['src'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
+                                tag['src'] = f"{{{{ url_for('static', filename='{tag['src']}') }}}}"
 
+                    url_pattern = re.compile(r'url\(([^)]+)\)')
+                    for tag in soup.find_all(style=True):
+                        style = tag['style']
+                        new_style = style
+                        
+                        # finds all urls in the style attribute
+                        urls = url_pattern.findall(style)
+                        for url in urls:
+                            url = url.strip(' "\'\t\n\r')  # strips surrounding quotes or spaces
+                            if not url.startswith(('http', 'mailto', 'tel', 'ftp', 'data')):
+                                new_url = f"{{{{ url_for('static', filename='{url}') }}}}"
+                                new_style = new_style.replace(url, new_url)
+                        tag['style'] = new_style
+           
                     with open(html_file_path, 'w', encoding='utf-8') as f:
                         f.write(str(soup))
 
