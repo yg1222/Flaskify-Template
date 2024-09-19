@@ -2,6 +2,7 @@ import os
 import argparse
 import shutil
 from bs4 import BeautifulSoup
+from boilerplate import generate_structure_and_boilerplate
 
 def main():
 
@@ -15,35 +16,12 @@ def main():
     theme_dir = os.path.normpath(args.theme_dir)
     flask_project_dir = os.path.normpath(args.flask_project_dir)
 
-    def modify_srcs(flask_project_dir):
-        templates_dir = os.path.join(flask_project_dir, 'templates')
-        for root, _, files in os.walk(templates_dir):
-            for file in files:
-                if file.endswith(('.html', '.htm')):
-                    html_file_path = os.path.join(root, file)
-
-                    with open(html_file_path, 'r', encoding='utf-8') as f:
-                        soup = BeautifulSoup(f, 'html.parser')
-                        
-                    for tag in soup.find_all(['link', 'img', 'script'], src=True) + soup.find_all('link', href=True):
-                        if tag.has_attr('href'):
-                            if not tag['href'].startswith('http'):
-                                file_name = os.path.basename(tag['href'])
-                                folder_name = tag['href'].split('/')[0]
-                                tag['href'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
-                        elif tag.has_attr('src'):
-                            if not tag['src'].startswith('http'):
-                                file_name = os.path.basename(tag['src'])
-                                folder_name = tag['src'].split('/')[0]
-                                tag['src'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
-
-                    with open(html_file_path, 'w', encoding='utf-8') as f:
-                        f.write(str(soup))
+    
 
     def copy_files(theme_dir, flask_project_dir):
         # directories for Flask
-        static_dir = os.path.join(flask_project_dir, 'static')
-        templates_dir = os.path.join(flask_project_dir, 'templates')
+        static_dir = os.path.join(flask_project_dir, 'app', 'static')
+        templates_dir = os.path.join(flask_project_dir, 'app', 'templates')
         os.makedirs(templates_dir, exist_ok=True)
         
         for cursor_root, cursor_root_dirs, cursor_root_files in os.walk(theme_dir):
@@ -65,6 +43,35 @@ def main():
                         if not os.path.exists(dest_file_path) or not os.path.samefile(src_file_path, dest_file_path):
                             shutil.copy(src_file_path, dest_file_path)
                     
+    def modify_srcs(flask_project_dir):
+        templates_dir = os.path.join(flask_project_dir, 'app', 'templates')
+        for root, _, files in os.walk(templates_dir):
+            for file in files:
+                if file.endswith(('.html', '.htm')):
+                    html_file_path = os.path.join(root, file)
+
+                    with open(html_file_path, 'r', encoding='utf-8') as f:
+                        soup = BeautifulSoup(f, 'html.parser')
+                        
+                    for tag in soup.find_all(['link', 'img', 'script'], src=True) + soup.find_all('link', href=True) + soup.find_all('a', href=True):
+                        if tag.has_attr('href'):
+                            if not tag['href'].startswith(('http', 'mailto', 'tel', 'ftp', 'data')):
+                                file_name = os.path.basename(tag['href'])
+                                folder_name = tag['href'].split('/')[0]
+                                if tag.name == 'link':
+                                    tag['href'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
+                                elif tag.name == 'a':
+                                    file_name = os.path.splitext(file_name)[0]  # Strip extension
+                                    tag['href'] = f"/{file_name}"
+                        elif tag.has_attr('src'):
+                            if not tag['src'].startswith('http'):
+                                file_name = os.path.basename(tag['src'])
+                                folder_name = tag['src'].split('/')[0]
+                                tag['src'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
+
+                    with open(html_file_path, 'w', encoding='utf-8') as f:
+                        f.write(str(soup))
+
 
     # theme_dir = os.path.normpath(input("Enter the theme path (relative or absolute path): "))
     # flask_project_dir = os.path.normpath(input("Enter you destination flask app path: "))
@@ -73,6 +80,7 @@ def main():
         os.chdir(theme_dir)
         theme_dir = os.path.relpath(os.getcwd(), theme_dir)
 
+    generate_structure_and_boilerplate(flask_project_dir)
     copy_files(theme_dir, flask_project_dir)
     modify_srcs(flask_project_dir)
 
