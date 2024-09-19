@@ -33,30 +33,29 @@ def generate_structure_and_boilerplate(base_path):
 
     # Boilerplate content for some of the files
     ignores="""# Byte-compiled / optimized / DLL files
-        __pycache__/
-        *.py[cod]
-        *$py.class
+__pycache__/
+*.py[cod]
+*$py.class
 
-        # Environment variables
-        .env
+# Environment variables
+.env
 
-        # Flask cache
-        instance/
-        *.sqlite3
+# Flask cache
+instance/
+*.sqlite3
 
-        # Logs
-        *.log
+# Logs
+*.log
 
-        # Virtual environment
-        venv/
-        pip-selfcheck.json
+# Virtual environment
+venv/
+pip-selfcheck.json
 
-        # Pytest cache
-        .cache/
+# Pytest cache
+.cache/
 
-        # Migrations
-        migrations/
-    """
+# Migrations
+migrations/"""
     page_extensions = """{% extends "base.html" %}
 
     {% block title %}Home{% endblock %}
@@ -71,63 +70,63 @@ def generate_structure_and_boilerplate(base_path):
 
     boilerplate_files = {
         "app/__init__.py": """from flask import Flask, render_template, request
-    from flask_mail import Mail, Message
-    import config
-    import logging
-    import os
-    from dotenv import load_dotenv
-    from datetime import datetime
+from flask_mail import Mail, Message
+import app.config
+import logging
+import os
+from dotenv import load_dotenv
+from datetime import datetime
 
-    load_dotenv()
+load_dotenv()
 
-    # Logging configs
-    log_format = '[%(asctime)s] %(levelname)s [line %(lineno)d in %(module)s]: %(message)s'
-    log_datefmt='%Y-%m-%d %H:%M:%S'
-    logging.basicConfig(
-        format=log_format,
-        datefmt=log_datefmt,
-        level=logging.DEBUG
-    )
+# Logging configs
+log_format = '[%(asctime)s] %(levelname)s [line %(lineno)d in %(module)s]: %(message)s'
+log_datefmt='%Y-%m-%d %H:%M:%S'
+logging.basicConfig(
+    format=log_format,
+    datefmt=log_datefmt,
+    level=logging.DEBUG
+)
 
-    app = Flask(__name__)
+app = Flask(__name__)
 
-    # Loading configuration from config.Config
-    app.config.from_object(config.Config)
+# Loading configuration from config.Config
+app.config.from_object(config.Config)
 
-    # Blueprints registerations
-    from blueprints.auth import auth
-    app.register_blueprint(auth)
-    from blueprints.billing import billing
-    app.register_blueprint(billing)
+# Blueprints registerations
+from app.blueprints.auth import auth
+app.register_blueprint(auth)
+from app.blueprints.billing import billing
+app.register_blueprint(billing)
 
-    # Initializations
-    mail = Mail(app)
-    current_year = datetime.now().year
+# Initializations
+mail = Mail(app)
+current_year = datetime.now().year
 
-    @app.before_request
-    def before_request():
-        ...
-        # if not access_allowed():
-        #     return jsonify({"message":"Unauthorized access"}), 403
+@app.before_request
+def before_request():
+    ...
+    # if not access_allowed():
+    #     return jsonify({"message":"Unauthorized access"}), 403
 
-    @app.route('/')
-    def index():
-        return render_template('index.html')
+@app.route('/')
+def index():
+    return render_template('index.html')
 
     """,
         "app/config.py": """import os
-    class Config:
-        SECRET_KEY = os.environ.get('SECRET_KEY')
-        STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
-        MAIL_SERVER = os.environ.get('MAIL_SERVER')
-        MAIL_PORT = int(os.environ.get('MAIL_PORT'))
-        MAIL_USE_TLS = False
-        MAIL_USE_SSL = True
-        MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-        MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-        MAIL_DEFAULT_SENDER = ("Display Name", "email@email.com")
-        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-        SQLALCHEMY_TRACK_MODIFICATIONS = False
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT'))
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = ("Display Name", "email@email.com")
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     """,
         "app/blueprints/auth.py": """from flask import Blueprint
     auth = Blueprint('auth', __name__)
@@ -154,13 +153,11 @@ def generate_structure_and_boilerplate(base_path):
         # Stripe integration logic
         pass
     """,
-        "wsgi.py": """from app import create_app
+        "wsgi.py": """from app import app
 
-    app = create_app()
-
-    if __name__ == "__main__":
-        app.run()
-    """,
+if __name__ == "__main__":
+    app.run()
+""",
     ".gitignore": ignores,
     ".dockerignore": ignores,
     "app/templates/base.html":"""<!DOCTYPE html>
@@ -257,13 +254,13 @@ def generate_structure_and_boilerplate(base_path):
     </html>
     """,
     ".env":"""SECRET_KEY=""
-    STRIPE_API_KEY=""
-    MAIL_SERVER=""
-    MAIL_PORT="465"
-    MAIL_USERNAME="x@x.com"
-    MAIL_PASSWORD=""
-    # MAIL_DEFAULT_SENDER=("Flask App", "x@x.com")
-    # """,
+STRIPE_API_KEY=""
+MAIL_SERVER=""
+MAIL_PORT="465"
+MAIL_USERNAME="x@x.com"
+MAIL_PASSWORD=""
+# MAIL_DEFAULT_SENDER=("Flask App", "x@x.com")
+# """,
     "requirements.txt":"""Flask
     flask-blueprint
     Flask-Mail
