@@ -24,18 +24,18 @@ def main():
 
                     with open(html_file_path, 'r', encoding='utf-8') as f:
                         soup = BeautifulSoup(f, 'html.parser')
-
-                    for link in soup.find_all('link', href=True):
-                        if not link['href'].startswith('http'):
-                            file_name = os.path.basename(link['href'])
-                            folder_name = link['href'].split('/')[0]
-                            link['href'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
-
-                    for script in soup.find_all('script', src=True):
-                        if not script['src'].startswith('http'):
-                            file_name = os.path.basename(script['src'])
-                            folder_name = script['src'].split('/')[0]
-                            script['src'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
+                        
+                    for tag in soup.find_all(['link', 'img', 'script'], src=True) + soup.find_all('link', href=True):
+                        if tag.has_attr('href'):
+                            if not tag['href'].startswith('http'):
+                                file_name = os.path.basename(tag['href'])
+                                folder_name = tag['href'].split('/')[0]
+                                tag['href'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
+                        elif tag.has_attr('src'):
+                            if not tag['src'].startswith('http'):
+                                file_name = os.path.basename(tag['src'])
+                                folder_name = tag['src'].split('/')[0]
+                                tag['src'] = f"{{{{ url_for('static', filename='{folder_name}/{file_name}') }}}}"
 
                     with open(html_file_path, 'w', encoding='utf-8') as f:
                         f.write(str(soup))
